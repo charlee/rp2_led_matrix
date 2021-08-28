@@ -7,21 +7,25 @@ from rp2 import asm_pio, StateMachine, PIO
     autopull=True,
 )
 def pio_74hc595():
-    pull()
-    mov(y, osr)                   # load loop counter to Y
+    pull()                          # pul the number of bits
+    mov(y, osr)                     # load the nubmer of bits to Y
+
     wrap_target()
-    mov(x, y)         .side(0b10) # set X to loop counter
+    mov(x, y)                       # set X to loop counter
     
-    label('loop')                 # main loop
-    out(pins, 1)      .side(0b00) # shift 1 bit from OSR to the first out pin
-                                  # drive SCLK pin low
-    jmp(x_dec, 'loop').side(0b01) # branch to loop if X is not zero, decrement X
-                                  # drive SCLK pin high
+    label('loop')                   # loop for DATA pin
+    out(pins, 1)      .side(0b00)   # send 1 bit to DATA pin / set SHIFT pin low
+    jmp(x_dec, 'loop').side(0b01)   # if not all bits sent, then loop / set SHIFT pin high to trigger the shift
+
+    pull()            .side(0b10)   # row completed, manual pull to discard unused data / set LATCH pin high
     wrap()
 
 
 
 class PIO_74HC595:
+    """
+    A class that controls 74HC595 using PIO.
+    """
     def __init__(self, out_base, sideset_base, freq, daisy_chain=4):
         self.sm = StateMachine(
             0,
@@ -31,7 +35,7 @@ class PIO_74HC595:
             freq=freq
         )
         
-        # put the loop counter into OSR so that it can be loaded to Y when SM starts
+        # put the number of bits into OSR so that it can be loaded to Y when SM starts
         self.sm.put(daisy_chain * 8 - 1)
     
     def start(self):
@@ -42,6 +46,5 @@ class PIO_74HC595:
         
     def put(self, data):
         self.sm.put(data)
-
 
 
