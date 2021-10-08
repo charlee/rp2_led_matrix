@@ -44,8 +44,8 @@ clock = RtcClock()
 clock.calibrate()
 
 # setup buttons
-IrqButton(17, lambda: clock.switch_mode())
-IrqButton(16, lambda: clock.set_inc())
+IrqButton(17, lambda x: clock.switch_mode())
+IrqButton(16, lambda x: clock.set_inc())
 
 
 try:
